@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16.2
+    container_name: dmlibrary-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dmlibrary_dev
+      POSTGRES_USER: dmlibrary_user
+      POSTGRES_PASSWORD: rome123
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  web:
+    build:
+      context: .
+    container_name: dmlibrary-dev-web
+    restart: unless-stopped
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - .env.dev
+    environment:
+      DATABASE_URL: postgres://dmlibrary_user:rome123@db:5432/dmlibrary_dev
+      DJANGO_SETTINGS_MODULE: mysite.settings.dev
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: dmlibrary-dev-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: don-maeda@cpgroup.jp
+      PGADMIN_DEFAULT_PASSWORD: rome123
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_dev_data:
+  pgadmin_data:
