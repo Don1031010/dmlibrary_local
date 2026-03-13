@@ -1,0 +1,87 @@
+{# templates/blog/blog_post_page.html #}
+{% extends "base_responsive.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<article class="mx-auto max-w-4xl px-4 py-10">
+  {# Breadcrumb #}
+  <nav class="mb-6 text-sm text-gray-500">
+    <a href="{{ page.get_parent.url }}" class="hover:text-indigo-700">Blog</a>
+    <span class="mx-2">/</span>
+    <span>{{ page.title }}</span>
+  </nav>
+
+  {# Header #}
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ page.title }}</h1>
+    <p class="mt-2 text-sm text-gray-500">
+      {% if page.first_published_at %}{{ page.first_published_at|date:"Y-m-d" }}{% endif %}
+      {% if page.author %} · {{ page.author.get_full_name|default:page.author.username }}{% endif %}
+    </p>
+  </header>
+
+  {# Optional gallery #}
+  {% if page.gallery.all %}
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {% for gi in page.gallery.all %}
+        <figure class="overflow-hidden rounded-2xl border bg-white">
+        {% if gi.image %}
+          {% image gi.image fill-1200x800 as rend %}
+          <img src="{{ rend.url }}" width="{{ rend.width }}" height="{{ rend.height }}"
+              class="h-full w-full object-cover" loading="lazy"
+              alt="{{ gi.caption|default:page.title }}">
+        {% endif %}
+          {% if gi.caption %}
+            <figcaption class="px-3 py-2 text-sm text-gray-600">{{ gi.caption }}</figcaption>
+          {% endif %}
+        </figure>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {# Body: StreamField (preferred) OR RichText fallback #}
+  {% if page.body %}
+    {# If StreamField, iterate to treat embeds specially #}
+    {% if page.body.stream_data %}
+      <section class="prose prose-indigo max-w-none prose-headings:scroll-mt-24">
+        {% for block in page.body %}
+          {% if block.block_type == "embed" %}
+            {# Center the embed and make it bigger, keeping 16:9 ratio #}
+            <div class="my-6 flex justify-center">
+              <div class="w-full max-w-3xl aspect-video">
+                {{ block }}   {# <- no filter needed #}
+              </div>
+            </div>
+          {% elif block.block_type == "image" %}
+            {# Optional: nicer image presentation inside prose #}
+            <figure class="my-6 overflow-hidden rounded-xl border bg-white">
+              {{ block }} {# ImageChooserBlock already renders an <img>; keep default #}
+            </figure>
+          {% else %}
+            {{ block }}
+          {% endif %}
+        {% endfor %}
+      </section>
+    {% else %}
+      {# RichTextField fallback — render as-is inside wide prose #}
+      <section class="prose prose-indigo max-w-none prose-headings:scroll-mt-24">
+        {{ page.body }}
+      </section>
+    {% endif %}
+  {% endif %}
+
+  {# Tags #}
+  {% if page.tags.all %}
+    <div class="mt-8 flex flex-wrap gap-2">
+      {% for t in page.tags.all %}
+        <a href="{{ page.get_parent.url }}?tag={{ t.name|urlencode }}"
+           class="rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700 hover:bg-indigo-100">
+          #{{ t.name }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+</article>
+{% endblock %}

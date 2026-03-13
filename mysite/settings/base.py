@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "core_images",
     "book",
     "photo",
+    "blog",
 ]
 
 MIDDLEWARE = [
