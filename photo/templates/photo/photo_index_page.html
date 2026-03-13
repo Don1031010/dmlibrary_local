@@ -1,0 +1,167 @@
+{% extends "base_responsive.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-7xl px-4 py-10">
+    <header class="mb-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ page.title }}</h1>
+
+    {% if request.user.is_authenticated  %}
+      <a href="{% url 'wagtailimages:add' %}"
+         class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        <!-- optional icon -->
+        <svg aria-hidden="true" class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11 11V5a1 1 0 1 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6z"/>
+        </svg>
+        Add Photo
+      </a>
+    {% endif %}
+  </div>
+
+  {% if page.intro %}
+    <div class="prose prose-sm mt-3 text-gray-700">
+      {{ page.intro|richtext }}
+    </div>
+  {% endif %}
+</header>
+  {% comment %} <header class="mb-6">
+    <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ page.title }}</h1>
+    {% if page.intro %}
+      <div class="prose prose-sm mt-3 text-gray-700">
+        {{ page.intro|richtext }}
+      </div>
+    {% endif %}
+  </header> {% endcomment %}
+
+  <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
+    {# LEFT: photos + "Clear" summary #}
+    <div class="lg:col-span-9">
+      {# Active filters summary (keep in this position above photos) #}
+      {% if selected_year or selected_tags or q %}
+        <div class="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          {% if q %}<span>Query: <span class="font-medium">“{{ q }}”</span></span>{% endif %}
+          {% if selected_year %}<span>Year: <span class="font-medium">{{ selected_year }}</span></span>{% endif %}
+          {% for t in selected_tags %}
+            <span class="rounded-full bg-indigo-50 px-2.5 py-1 text-indigo-700">#{{ t }}</span>
+          {% endfor %}
+          <a href="{{ page.url }}" class="ml-2 rounded-xl border px-2 py-1 hover:bg-gray-50">Clear</a>
+        </div>
+      {% endif %}
+
+      {# Grid #}
+      {% if images and images.object_list %}
+        <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+          {% for img in images %}
+            <li class="group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md">
+              {% image img original as full %}
+              <a href="{{ full.url }}" target="_blank" rel="noopener" class="block">
+                <div class="aspect-square bg-gray-100">
+                  {% image img fill-600x600 class="h-full w-full object-cover transition group-hover:scale-[1.02]" alt=img.title %}
+                </div>
+                <div class="p-3">
+                  <h3 class="line-clamp-1 text-sm font-medium text-gray-900">{{ img.title }}</h3>
+                    {% if img.collection %}
+                        <p class="mt-1 text-xs text-gray-500">
+                        {{ img.collection.name }}
+                        {% if img.taken_at %}<span aria-hidden="true"> • </span>{{ img.taken_at|date:"Y-m-d" }}{% endif %}
+                        </p>
+                    {% elif img.taken_at %}
+                        <p class="mt-1 text-xs text-gray-500">{{ img.taken_at|date:"Y-m-d" }}</p>
+                    {% endif %}
+                </div>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+
+        {# Pagination (preserve filters) #}
+        {% if images.paginator.num_pages > 1 %}
+          <nav class="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
+            {% if images.has_previous %}
+              <a href="?page={{ images.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% for t in selected_tags %}&tag={{ t|urlencode }}{% endfor %}"
+                 class="rounded-xl border px-3 py-1.5 hover:bg-gray-50">Prev</a>
+            {% else %}
+              <span class="rounded-xl border px-3 py-1.5 text-gray-300">Prev</span>
+            {% endif %}
+
+            <span class="rounded-xl border bg-gray-50 px-3 py-1.5 text-sm">
+              Page {{ images.number }} of {{ images.paginator.num_pages }}
+            </span>
+
+            {% if images.has_next %}
+              <a href="?page={{ images.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% for t in selected_tags %}&tag={{ t|urlencode }}{% endfor %}"
+                 class="rounded-xl border px-3 py-1.5 hover:bg-gray-50">Next</a>
+            {% else %}
+              <span class="rounded-xl border px-3 py-1.5 text-gray-300">Next</span>
+            {% endif %}
+          </nav>
+        {% endif %}
+      {% else %}
+        <p class="text-gray-600">No images found for the current filters.</p>
+      {% endif %}
+    </div>
+
+    {# RIGHT: sidebar filters #}
+    <aside class="lg:col-span-3">
+      <form method="get" class="rounded-2xl border bg-white p-4 lg:sticky lg:top-24">
+        {# Search (top) #}
+        <div class="mb-4">
+          <label class="mb-1 block text-sm font-medium text-gray-700">Search</label>
+          <input
+            type="text"
+            name="q"
+            value="{{ q|default_if_none:'' }}"
+            placeholder="Search images…"
+            class="w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        {# Year (below search) #}
+        <div class="mb-4">
+          <label class="mb-1 block text-sm font-medium text-gray-700">Year (taken_at)</label>
+          <select name="year" class="w-full rounded-xl border border-gray-300 px-4 py-2">
+            <option value="">All years</option>
+            {% for y in available_years %}
+              <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {# Buttons row (next row) #}
+        <div class="mb-4 flex items-center gap-2">
+          <button class="w-full rounded-xl bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
+            Apply
+          </button>
+          <a href="{{ page.url }}" class="w-full rounded-xl border px-4 py-2 text-center text-gray-700 hover:bg-gray-50">
+            Reset
+          </a>
+        </div>
+
+        {# Tags (rows below) #}
+        {% if available_tags %}
+          <fieldset>
+            <legend class="mb-2 text-sm font-medium text-gray-700">Tags</legend>
+            <div class="flex flex-wrap gap-2">
+              {% for t in available_tags %}
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1 text-sm hover:bg-gray-50">
+                  <input
+                    type="checkbox"
+                    name="tag"
+                    value="{{ t.name }}"
+                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    {% if t.name in selected_tags %}checked{% endif %}
+                  />
+                  <span class="text-gray-800">#{{ t.name }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% endif %}
+      </form>
+    </aside>
+  </div>
+</section>
+{% endblock %}

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "cms_taxonomy",
     "core_images",
     "book",
+    "photo",
 ]
 
 MIDDLEWARE = [

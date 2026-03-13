@@ -1,0 +1,58 @@
+{# templates/photo/album_index_page.html #}
+{% extends "base_responsive.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-8">
+  <header class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight">{{ page.title }}</h1>
+    {% if page.search_description %}
+      <p class="mt-2 text-slate-600">{{ page.search_description }}</p>
+    {% endif %}
+  </header>
+
+  {# Grid of albums #}
+  <section>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {# Use .get_children and then .specific per item to access album fields #}
+      {% for node in page.get_children.live %}
+        {% with album=node.specific %}
+          <article class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+            <a href="{% pageurl album %}" class="block">
+              {# cover image: first PhotoAlbumItem's image #}
+            {% with first_item=album.items.all|first %}
+            {% if first_item and first_item.image %}
+                <div class="aspect-[4/3] w-full overflow-hidden bg-slate-100">
+                {% image first_item.image fill-800x600 as img %}
+                <img src="{{ img.url }}" width="{{ img.width }}" height="{{ img.height }}"
+                    class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    loading="lazy" alt="{{ first_item.image.title }}">
+                </div>
+            {% else %}
+                <div class="aspect-[4/3] w-full bg-slate-100 flex items-center justify-center">
+                <span class="text-slate-400">No cover image</span>
+                </div>
+            {% endif %}
+            {% endwith %}
+
+              <div class="p-4">
+                <h2 class="text-lg font-semibold line-clamp-2">{{ album.title }}</h2>
+                <div class="mt-1 flex items-center gap-2 text-sm text-slate-500">
+                  <span>{{ album.items.count }} photos</span>
+                </div>
+                {% if album.description %}
+                  <p class="mt-2 text-sm text-slate-600 line-clamp-3">
+                    {{ album.description|richtext|striptags|truncatechars:140 }}
+                  </p>
+                {% endif %}
+              </div>
+            </a>
+          </article>
+        {% endwith %}
+      {% empty %}
+        <p class="text-slate-600">No albums yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}

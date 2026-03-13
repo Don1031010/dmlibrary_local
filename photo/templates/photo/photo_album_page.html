@@ -1,0 +1,66 @@
+{# templates/photo/photo_album_page.html #}
+{% extends "base_responsive.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-8">
+  <nav class="mb-4 text-sm">
+    {% with parent=page.get_parent %}
+      <a href="{% pageurl parent %}" class="text-slate-600 hover:text-slate-900 underline underline-offset-2">Back to albums</a>
+    {% endwith %}
+  </nav>
+
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold tracking-tight">{{ page.title }}</h1>
+    {% if page.description %}
+      <div class="prose prose-slate max-w-none mt-3">
+        {{ page.description|richtext }}
+      </div>
+    {% endif %}
+  </header>
+
+  {# Photo grid #}
+  <section>
+    {% if page.items.all %}
+      <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {% for item in page.items.all %}
+          <li class="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            {% if item.image %}
+              <figure>
+                <div class="aspect-[4/3] w-full overflow-hidden bg-slate-100">
+
+                {% image item.image fill-800x600 as img %}
+                  <a href="{{ item.image.file.url }}" target="_blank" rel="noopener noreferrer">
+                    <img src="{{ img.url }}" width="{{ img.width }}" height="{{ img.height }}"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        loading="lazy" alt="{{ item.image.title }}">
+                  </a>
+                <!-- <img src="{{ img.url }}" width="{{ img.width }}" height="{{ img.height }}"
+                    class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    loading="lazy" alt="{{ item.image.title }}"> -->
+                </div>
+                {% if item.image.title %}
+                  <figcaption class="px-3 py-2 text-sm text-slate-700">
+                    {{ item.image.title }}
+                  </figcaption>
+                {% endif %}
+                {% if item.caption %}
+                  <figcaption class="px-3 py-2 text-sm text-slate-700">
+                    {{ item.caption }}
+                  </figcaption>
+                {% endif %}
+              </figure>
+            {% else %}
+              <div class="aspect-[4/3] w-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                <span class="text-slate-400">No image</span>
+              </div>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-slate-600">No photos in this album yet.</p>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}
