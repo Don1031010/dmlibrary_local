@@ -1,4 +1,6 @@
 from django.db import models
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils import timezone
 
 from wagtail.models import Page
@@ -7,6 +9,12 @@ from wagtail.images import get_image_model
 
 class HomePage(Page):
     template = "home/home_page.html"
+
+    def serve(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            login_url = reverse("wagtailadmin_login")
+            return redirect(f"{login_url}?next={request.path}")
+        return super().serve(request, *args, **kwargs)
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
