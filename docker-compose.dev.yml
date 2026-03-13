@@ -17,6 +17,7 @@ services:
       context: .
     container_name: dmlibrary-dev-web
     restart: unless-stopped
+    user: "0:0"
     command: python manage.py runserver 0.0.0.0:8000
     env_file:
       - .env.dev
@@ -25,6 +26,8 @@ services:
       DJANGO_SETTINGS_MODULE: mysite.settings.dev
     volumes:
       - .:/app
+      - dmlibrary_media_dev:/app/media
+      - dmlibrary_static_dev:/app/staticfiles
     depends_on:
       - db
     ports:
@@ -47,3 +50,5 @@ services:
 volumes:
   postgres_dev_data:
   pgadmin_data:
+  dmlibrary_media_dev:
+  dmlibrary_static_dev:

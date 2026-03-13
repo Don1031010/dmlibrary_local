@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     
     "cms_taxonomy",
+    "core_images",
 ]
 
 MIDDLEWARE = [
@@ -175,6 +176,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
 # Wagtail settings
 
 WAGTAIL_SITE_NAME = "mysite"
+
+WAGTAILIMAGES_IMAGE_MODEL = "core_images.CustomImage"
 
 # Search
 # https://docs.wagtail.org/en/stable/topics/search/backends.html
