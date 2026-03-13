@@ -37,3 +37,10 @@ dist/
 # DB dumps and media archives
 *.sql
 *.tar.gz
+
+# Production secrets
+.env.prod
+
+# SSL certs and certbot logs (managed on server)
+reverse-proxy/nginx/certs/
+reverse-proxy/certbot/log/
