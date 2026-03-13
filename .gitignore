@@ -33,3 +33,7 @@ dist/
 
 # logs
 *.log
+
+# DB dumps and media archives
+*.sql
+*.tar.gz
