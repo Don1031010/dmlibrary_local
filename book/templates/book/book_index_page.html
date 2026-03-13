@@ -1,0 +1,180 @@
+{# templates/book/book_index_page.html #}
+{% extends "base_responsive.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-8">
+
+  {# Page heading with "Add Book" button #}
+  <header class="mb-6 flex items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight">{{ page.title }}</h1>
+      {% if page.intro %}<div class="prose prose-slate mt-2">{{ page.intro|richtext }}</div>{% endif %}
+    </div>
+
+    {# Link to Wagtail admin: add BookPage under this index page #}
+    {% url 'wagtailadmin_pages:add' 'book' 'bookpage' page.id as add_book_url %}
+    {% if request.user.is_authenticated %}
+      <a href="{{ add_book_url }}"
+         class="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800">
+        Add Book
+      </a>
+    {% endif %}
+  </header>
+
+  {# Two-column layout: results left, sidebar right #}
+  <div class="grid gap-8 lg:grid-cols-12">
+
+    {# LEFT: Results #}
+    <section class="lg:col-span-9">
+
+      {# Optional: show the active tag as a chip with a clear button #}
+      {% if active_tag %}
+        <div class="mb-4 flex items-center gap-2">
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
+            Tag: {{ active_tag }}
+          </span>
+          {# link that removes only the tag param #}
+          <a href="?{% if q %}&q={{ q|urlencode }}{% endif %}{% if active_tag %}&tag={{ active_tag }}{% endif %}{% if active_category %}&category={{ active_category }}{% endif %}{% if active_language %}&lang={{ active_language }}{% endif %}"
+             class="text-sm text-slate-600 underline underline-offset-2 hover:text-slate-900">
+            Clear tag
+          </a>
+        </div>
+      {% endif %}
+
+      {# Results grid #}
+      {% if books %}
+
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {% for book in books %}
+            <article class="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+              <a href="{% pageurl book %}" class="block">
+                {# ↓ Smaller thumbnail: keep aspect, center, and scale to ~70% #}
+                <div class="aspect-[3/4] w-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                  {% if book.cover_image %}
+                    {% image book.cover_image fill-280x420 as cover %}
+                    <img src="{{ cover.url }}" width="{{ cover.width }}" height="{{ cover.height }}"
+                         class="w-full object-cover transition duration-300 group-hover:scale-105"
+                         loading="lazy" alt="{{ book.cover_image.title }}">
+                  {% else %}
+                    <div class="flex h-full w-full items-center justify-center text-slate-400">
+                      No cover
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="p-2">
+                  <h2 class="text-sm font-semibold line-clamp-1">{{ book.title }}</h2>
+                  {% comment %} {% if book.sub_title %}
+                    <p class="mt-1 text-xs text-slate-600 line-clamp-1">{{ book.sub_title }}</p>
+                  {% endif %} {% endcomment %}
+                  <p class="mt-1 text-xs text-slate-500 line-clamp-1">
+                    {% if book.author %}{{ book.author }}{% endif %}
+                    {% comment %} {% if book.published_date %} · <time datetime="{{ book.published_date|date:'Y-m-d' }}">{{ book.published_date|date:"Y" }}</time>{% endif %}
+                    {% if book.language %} · <span class="uppercase">{{ book.language }}</span>{% endif %} {% endcomment %}
+                  </p>
+
+                  {# tiny tag chips (optional) #}
+                  {% comment %} {% if book.tags.all %}
+                    <ul class="mt-2 flex flex-wrap gap-1">
+                      {% for t in book.tags.all|slice:":4" %}
+                        <li>
+                          <a href="?tag={{ t }}&q={{ q }}&category={{ active_category }}&lang={{ active_language }}"
+                             class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-200">
+                            #{{ t }}
+                          </a>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %} {% endcomment %}
+                </div>
+              </a>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-slate-600">No books found.</p>
+      {% endif %}
+
+      {# Pagination #}
+      {% if books.paginator.num_pages > 1 %}
+        <nav class="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
+          {% if books.has_previous %}
+            <a href="?page={{ books.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if active_tag %}&tag={{ active_tag }}{% endif %}{% if active_category %}&category={{ active_category }}{% endif %}{% if active_language %}&lang={{ active_language }}{% endif %}"
+               class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Prev</a>
+          {% else %}
+            <span class="rounded-lg border border-slate-200 px-3 py-1 text-slate-400">Prev</span>
+          {% endif %}
+
+          {% for num in books.paginator.page_range %}
+            {% if num >= books.number|add:"-2" and num <= books.number|add:"2" %}
+              {% if num == books.number %}
+                <span class="rounded-lg bg-slate-900 px-3 py-1 text-white">{{ num }}</span>
+              {% else %}
+                <a href="?page={{ num }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if active_tag %}&tag={{ active_tag }}{% endif %}{% if active_category %}&category={{ active_category }}{% endif %}{% if active_language %}&lang={{ active_language }}{% endif %}"
+                   class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">{{ num }}</a>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
+          {% if books.has_next %}
+            <a href="?page={{ books.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if active_tag %}&tag={{ active_tag }}{% endif %}{% if active_category %}&category={{ active_category }}{% endif %}{% if active_language %}&lang={{ active_language }}{% endif %}"
+               class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Next</a>
+          {% else %}
+            <span class="rounded-lg border border-slate-200 px-3 py-1 text-slate-400">Next</span>
+          {% endif %}
+        </nav>
+      {% endif %}
+    </section>
+
+    {# RIGHT: Sidebar filters #}
+    <aside class="lg:col-span-3">
+      <form method="get" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-4 lg:sticky lg:top-24">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Search</label>
+          <input type="search" name="q" value="{{ q|default_if_none:'' }}"
+                 placeholder="Title, author…"
+                 class="w-full rounded-lg border border-slate-300 px-3 py-2" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+          <select name="category" class="w-full rounded-lg border border-slate-300 px-3 py-2" onchange="this.form.submit()">
+            <option value="" {% if not active_category %}selected{% endif %}>All categories</option>
+            {% for cat in category_options %}
+              <option value="{{ cat.slug }}" {% if active_category == cat.slug %}selected{% endif %}>
+                {{ cat.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Language</label>
+          <select name="lang" class="w-full rounded-lg border border-slate-300 px-3 py-2" onchange="this.form.submit()">
+            <option value="" {% if not active_language %}selected{% endif %}>すべて</option>
+            {% for code, label in language_options %}
+              <option value="{{ code }}" {% if active_language == code %}selected{% endif %}>
+                {{ label }} 
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="submit"
+                  class="flex-1 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800">
+            Apply
+          </button>
+          <a href="{% pageurl page %}"
+             class="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-slate-700 text-center hover:bg-slate-50">
+            Reset
+          </a>
+        </div>
+      </form>
+    </aside>
+
+  </div>
+</main>
+{% endblock %}

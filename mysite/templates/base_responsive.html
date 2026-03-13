@@ -1,0 +1,42 @@
+{# templates/base.html #}
+{% load static wagtailcore_tags wagtailuserbar %}
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <title>{% block title %}{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% comment %} <script src="https://cdn.tailwindcss.com"></script> {% endcomment %}
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+
+  </head>
+
+  {# Allow pages to override the entire <body> tag if needed #}
+  {% block body_tag %}
+  <body {% block body_attrs %} class="{% if False %} bg-white {% else %} bg-gray-50 {% endif %}" {% endblock %}>
+  {% endblock %}
+
+
+  {% include "partials/navbar-dashboard.html" %}
+
+  <div class="flex overflow-hidden bg-white pt-16">
+    {% include "partials/sidebar.html" %}
+
+    <div id="main-content" class="h-full w-full bg-gray-50 relative overflow-y-auto lg:ml-56">
+      <main>
+        {# Hugo's {{ .Content }} -> a Django block child templates will fill #}
+        {% block content %}{% endblock %}
+      </main>
+
+      {# Hugo's .Params.footer -> pass as page.footer (or change to just footer) #}
+      {% if True %}
+        {% include "partials/footer-dashboard.html" %}
+      {% endif %}
+    </div>
+  </div>
+
+  </body>
+  <script src={% static 'js/sidebar.js' %}></script>
+
+</html>
