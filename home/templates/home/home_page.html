@@ -1,21 +1,151 @@
-{% extends "base.html" %}
-{% load static %}
+{% extends "base_responsive.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
 
-{% block body_class %}template-homepage{% endblock %}
-
-{% block extra_css %}
-
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
-{% endblock extra_css %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
+<div class="mx-auto max-w-7xl px-4 py-10 space-y-12">
 
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-{% include 'home/welcome_page.html' %}
+  {# ── On This Day ── #}
+  {% if on_this_day %}
+  <section>
+    <div class="mb-4">
+      <h2 class="text-xl font-bold text-gray-900">On This Day
+        <span class="ml-2 text-base font-normal text-gray-500">{{ today|date:"F j" }}</span>
+      </h2>
+    </div>
+    <ul class="flex gap-3 overflow-x-auto pb-2">
+      {% for img in on_this_day %}
+        <li class="group flex-none w-40 overflow-hidden rounded-xl border bg-white shadow-sm">
+          {% image img original as full %}
+          <a href="{{ full.url }}" target="_blank" rel="noopener">
+            <div class="aspect-square bg-gray-100 overflow-hidden">
+              {% image img fill-300x300 class="h-full w-full object-cover transition group-hover:scale-105" alt=img.title %}
+            </div>
+            <p class="px-2 py-1.5 text-xs text-gray-500">{{ img.taken_at|date:"Y" }}</p>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 
-{% endblock content %}
+  {# ── Latest Photos ── #}
+  {% if latest_photos %}
+  <section>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-gray-900">Latest Photos</h2>
+      {% if photo_index_page %}
+        <a href="{% pageurl photo_index_page %}" class="text-sm text-indigo-600 hover:underline">View all →</a>
+      {% endif %}
+    </div>
+    <ul class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+      {% for img in latest_photos %}
+        <li class="group aspect-square overflow-hidden rounded-xl bg-gray-100">
+          {% image img original as full %}
+          <a href="{{ full.url }}" target="_blank" rel="noopener">
+            {% image img fill-200x200 class="h-full w-full object-cover transition group-hover:scale-105" alt=img.title %}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {# ── Latest Albums ── #}
+  {% if latest_albums %}
+  <section>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-gray-900">Latest Albums</h2>
+      {% if album_index_page %}
+        <a href="{% pageurl album_index_page %}" class="text-sm text-indigo-600 hover:underline">View all →</a>
+      {% endif %}
+    </div>
+    <ul class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {% for album in latest_albums %}
+        <li class="group rounded-2xl border bg-white shadow-sm hover:shadow-md transition overflow-hidden">
+          <a href="{% pageurl album %}">
+            {% with first_item=album.items.all|first %}
+              {% if first_item and first_item.image %}
+                <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
+                  {% image first_item.image fill-400x300 class="h-full w-full object-cover transition group-hover:scale-[1.02]" alt=album.title %}
+                </div>
+              {% else %}
+                <div class="aspect-[4/3] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                  <svg class="w-10 h-10 text-slate-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+              {% endif %}
+            {% endwith %}
+            <div class="p-3">
+              <p class="text-sm font-medium text-gray-900 line-clamp-1">{{ album.title }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">{{ album.items.count }} photos</p>
+            </div>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {# ── Latest Blog Posts ── #}
+  {% if latest_posts %}
+  <section>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-gray-900">Latest Posts</h2>
+      {% if blog_index_page %}
+        <a href="{% pageurl blog_index_page %}" class="text-sm text-indigo-600 hover:underline">View all →</a>
+      {% endif %}
+    </div>
+    <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {% for post in latest_posts %}
+        <li class="rounded-2xl border bg-white shadow-sm hover:shadow-md transition p-4">
+          <a href="{% pageurl post %}">
+            <p class="text-xs text-gray-400 mb-1">{{ post.first_published_at|date:"Y-m-d" }}</p>
+            <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">{{ post.title }}</h3>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {# ── Latest Books ── #}
+  {% if latest_books %}
+  <section>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-gray-900">Latest Books</h2>
+      {% if book_index_page %}
+        <a href="{% pageurl book_index_page %}" class="text-sm text-indigo-600 hover:underline">View all →</a>
+      {% endif %}
+    </div>
+    <ul class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {% for book in latest_books %}
+        <li class="group rounded-2xl border bg-white shadow-sm hover:shadow-md transition overflow-hidden">
+          <a href="{% pageurl book %}">
+            {% if book.cover_image %}
+              <div class="aspect-[2/3] bg-gray-100 overflow-hidden">
+                {% image book.cover_image fill-280x420 class="h-full w-full object-cover transition group-hover:scale-[1.02]" alt=book.title %}
+              </div>
+            {% else %}
+              <div class="aspect-[2/3] bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center">
+                <svg class="w-10 h-10 text-indigo-300" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M11.25 4.533A9.707 9.707 0 0 0 6 3a9.735 9.735 0 0 0-3.25.555.75.75 0 0 0-.5.707v14.25a.75.75 0 0 0 1 .707A8.237 8.237 0 0 1 6 18.75c1.995 0 3.823.707 5.25 1.886V4.533ZM12.75 20.636A8.214 8.214 0 0 1 18 18.75c.966 0 1.89.166 2.75.47a.75.75 0 0 0 1-.708V4.262a.75.75 0 0 0-.5-.707A9.735 9.735 0 0 0 18 3a9.707 9.707 0 0 0-5.25 1.533v16.103Z"/>
+                </svg>
+              </div>
+            {% endif %}
+            <div class="p-3">
+              <p class="text-sm font-medium text-gray-900 line-clamp-1">{{ book.title }}</p>
+              <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ book.author }}</p>
+            </div>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+
+</div>
+{% endblock %}
